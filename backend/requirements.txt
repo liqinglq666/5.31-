@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────
+# SmartPact 后端核心依赖
+# ─────────────────────────────────────────────────────────────
+
+# FastAPI & ASGI Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+starlette>=0.35.0
+
+# Database & ORM
+sqlalchemy[asyncio]>=2.0.0
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.0
+alembic>=1.13.0
+
+# Pydantic & Configuration
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+
+# LLM & OpenAI Compatible SDK
+openai>=1.0.0
+httpx>=0.26.0
+
+# LangChain Ecosystem (RAG / Text Splitting)
+langchain-openai>=0.1.0
+langchain-core>=0.1.0
+langchain-text-splitters>=0.0.1
+langchain-chroma>=0.0.5
+
+# Vector Database
+chromadb>=0.4.0
+pymilvus>=2.4.0
+
+# Document Processing
+# ⚠️ docling 依赖树庞大，建议在 Dockerfile 中单独分层安装以利用缓存
+docling>=2.0.0
+pymupdf>=1.23.0
+pypdf>=4.0.0
+openpyxl>=3.1.0
+python-docx>=1.1.0
+
+# Local Embedding Model
+# ⚠️ 首次运行会自动从 HuggingFace 下载模型权重（约 100MB）
+sentence-transformers>=2.5.0
+
+# Authentication & Security
+bcrypt>=4.1.0
+pyjwt>=2.8.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+cryptography>=42.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+aiofiles>=23.2.0
+
+# Redis (预留，当前配置已定义 REDIS_URL，后续缓存与队列扩展使用)
+redis>=5.0.0
+
+# Development & Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# ─────────────────────────────────────────────────────────────
+# 以下依赖因体积巨大，已在 Dockerfile 中单独处理，此处仅作备注：
+#   torch==2.4.1+cpu        (Docling / sentence-transformers 底层依赖)
+#   torchvision==0.19.1+cpu (同上)
+# 若本地非 Docker 环境安装，请根据 CUDA  availability 选择对应版本：
+#   CPU:  pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   CUDA: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# ─────────────────────────────────────────────────────────────

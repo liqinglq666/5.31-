@@ -1,0 +1,197 @@
+version: '3.5'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: bank-ai-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123456"
+      POSTGRES_DB: bank-ai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: bank-ai-redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+
+  # MinIO 对象存储
+  minio:
+    image: minio/minio:latest
+    container_name: bank-ai-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+
+  # Milvus etcd
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.5
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_data:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+
+  # Milvus minio (对象存储)
+  milvus-minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "19001:9001"
+      - "19000:9000"
+    volumes:
+      - milvus_minio_data:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+
+  # Milvus standalone
+  milvus-standalone:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.4.0
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: milvus-minio:9000
+    volumes:
+      - milvus_data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - etcd
+      - milvus-minio
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+
+  # FastAPI 后端
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bank-ai-backend
+    env_file:
+      - ./backend/.env
+    environment:
+      # 使用官方 HuggingFace endpoint：hf-mirror.com 对 snapshot_download 的 HEAD 请求支持不完整
+      HF_ENDPOINT: https://huggingface.co
+      HF_HUB_DOWNLOAD_TIMEOUT: "600"
+      HF_HUB_ETAG_TIMEOUT: "600"
+      # 显式覆盖离线模式：Windows 系统变量 HF_HUB_OFFLINE=0 会被 Docker 传入容器，
+      # huggingface_hub 视任何非空字符串为 truthy。设空字符串彻底关闭离线模式。
+      HF_HUB_OFFLINE: ""
+      LLM_MODEL: kimi-k2.6
+      POSTGRES_URL: postgresql://postgres:123456@postgres:5432/bank-ai
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MILVUS_HOST: milvus-standalone
+      MILVUS_PORT: "19530"
+      # 限制 ONNX Runtime / OpenMP 线程数，防止并发 PDF 解析时内存爆炸
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      VECLIB_MAXIMUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+    ports:
+      - "8002:8000"
+    depends_on:
+      - postgres
+      - redis
+      - milvus-standalone
+    volumes:
+      - ./backend:/app
+      - ./backend/models:/app/models
+      # HuggingFace 模型缓存：挂载宿主机已下载的缓存，避免容器内重复下载
+      - /c/Users/admin/.cache/huggingface:/root/.cache/huggingface
+      - docling_cache:/root/.cache/docling
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+    # 开发模式：代码变更自动重载，且把宿主机代码挂载进容器
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Vue3 前端（开发模式，支持热重载）
+  frontend:
+    image: node:20-alpine
+    container_name: bank-ai-frontend
+    working_dir: /app
+    environment:
+      VITE_API_BASE_URL: http://localhost:8002
+    volumes:
+      - ./frontend/bank-ai:/app
+    command: sh -c "npm install && npm run dev -- --host"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - bank-ai-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  etcd_data:
+  milvus_minio_data:
+  milvus_data:
+  docling_cache:
+
+networks:
+  bank-ai-net:
+    driver: bridge
