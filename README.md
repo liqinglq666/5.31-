@@ -26,7 +26,7 @@
 
 <div align="center">
 
-[![SmartPact Demo Banner](https://github.com/user-attachments/assets/237ddec7-e8db-485a-a66b-06919aa41224)](https://ai.ybl666.xyz)
+[<img width="1695" height="457" alt="image" src="https://github.com/user-attachments/assets/5839b072-dced-408e-bf9c-f41e41bf82ab" />](https://ai.ybl666.xyz)
 
 **👆 点击上方图片即可访问 https://ai.ybl666.xyz**
 
