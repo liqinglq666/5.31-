@@ -1,3 +1,6 @@
+.env
+!.env.example
+
 # Backend
 backend/.env
 backend/__pycache__/
@@ -33,14 +36,11 @@ model_hot_swap_plan.md
 # Docker runtime data
 volumes/
 
-# Docling / embedding model weights (auto-downloaded, large files)
+# Docling / embedding model weights
 backend/models/
 
 # Test data
 008/
-
-# Claude local files
-.claude/
 
 # Old guides / generated HTMLs
 SmartPact_从零构建保姆级指南.html
