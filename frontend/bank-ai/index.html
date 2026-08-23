@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>智契 AI 审查中台</title>
+  </head>
+  <body>
+    <!-- 加载动画层：Vue 挂载前显示 -->
+    <div id="loading-screen">
+      <div class="loading-box">
+        <div class="loading-logo">
+          <img src="/logo.png" alt="智契" />
+        </div>
+        <div class="loading-text">正在努力启动，请稍后</div>
+        <div class="loading-sub">首次加载可能需要 10-20 秒</div>
+        <div class="loading-bar-wrap">
+          <div class="loading-bar"></div>
+        </div>
+      </div>
+      <style>
+        #loading-screen {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          background: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .loading-box {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          padding: 0 24px;
+        }
+        .loading-logo img {
+          height: 64px;
+          width: auto;
+          object-fit: contain;
+        }
+        .loading-text {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1e3a8a;
+          letter-spacing: 1px;
+        }
+        .loading-sub {
+          font-size: 13px;
+          color: #94a3b8;
+        }
+        .loading-bar-wrap {
+          width: 220px;
+          height: 4px;
+          background: #f0f2f5;
+          border-radius: 2px;
+          overflow: hidden;
+          margin-top: 8px;
+        }
+        .loading-bar {
+          height: 100%;
+          width: 40%;
+          background: linear-gradient(90deg, #2563eb, #1e3a8a);
+          border-radius: 2px;
+          animation: loadingSlide 1.5s ease-in-out infinite;
+        }
+        @keyframes loadingSlide {
+          0% { transform: translateX(-100%); }
+          50% { transform: translateX(150%); }
+          100% { transform: translateX(-100%); }
+        }
+      </style>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,59 @@
+.env
+!.env.example
+
+# Backend
+backend/.env
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+
+# Frontend
+frontend/bank-ai/node_modules/
+frontend/bank-ai/dist/
+frontend/bank-ai/dist-test/
+frontend/bank-ai/.vite/
+frontend/bank-ai/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
+
+# Architecture Docs
+prompt_architecture.html
+model_hot_swap_plan.md
+
+# Docker runtime data
+volumes/
+
+# Docling / embedding model weights
+backend/models/
+
+# Test data
+008/
+
+# Old guides / generated HTMLs
+SmartPact_从零构建保姆级指南.html
+智审合规助手_架构白皮书与商业分析报告.html
+智审合规助手_架构白皮书与商业分析报告.md
+SmartPact_V3_Architecture_Defense.html
+SmartPact_V3_Architecture_Defense.md
+agent_upgrade_v3.md
+visual_localization_plan.md
+
+# Logs and debug output
+*.log
+
+# Local temporary files
+暂时没用/
